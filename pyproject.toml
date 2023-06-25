@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "text-rpg"
+version = "0.1.0"
+description = "A text-based rpg project."
+authors = ["Jess Costakis <costakis.2@osu.edu>"]
+license = "TBD"
+readme = "README.md"
+packages = [{include = "text_rpg"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pygame = "^2.5.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
