@@ -9,9 +9,15 @@ in the model.
 import pygame
 import pygame_gui
 
+import events.system_events
+from event_manager import EventManager
+
 class GameUI():
     """A pygame GUI object"""
-    def __init__(self):
+    def __init__(self, event_manager):
+        self.event_manager = event_manager
+        self.event_manager.register_listener(events.system_events.QuitEvent, self)
+        
         pygame.init()
 
         self.screen_resolution = (1280, 720)
@@ -39,21 +45,6 @@ class GameUI():
         input_textbox = pygame_gui.elements.UITextEntryLine(text_input_rect, self.manager, initial_text="> ")
         return input_textbox 
     
-    def poll_events(self) -> []:
-        new_events = []
-        for event in pygame.event.get():
-            self.manager.process_events(event)
-            match event.type:
-                case pygame.QUIT:
-                    new_events.append("quit")
-                case pygame_gui.UI_TEXT_ENTRY_FINISHED:
-                    # Append entered text
-                    self.output_textbox.append_html_text(f"\n{event.text}")
-                    # TODO: Generate event to be handled by controller here
-                    self.input_textbox.set_text("> ")
-
-        return new_events
-
     def update(self) -> None:
         time_delta = self.clock.tick(60)/1000.00
         self.manager.update(time_delta)
@@ -64,3 +55,20 @@ class GameUI():
 
     def quit(self) -> None:
         pygame.quit()
+
+    def publish_events(self):
+        for event in pygame.event.get():
+            self.manager.process_events(event)
+            match event.type:
+                case pygame.QUIT:
+                    self.event_manager.queue_event(events.system_events.QuitEvent())
+                case pygame_gui.UI_TEXT_ENTRY_FINISHED:
+                    # TODO: Make this trigger event and trigger text parser 
+                    # Append entered text
+                    self.output_textbox.append_html_text(f"\n{event.text}")
+                    # TODO: Generate event to be handled by controller here
+                    self.input_textbox.set_text("> ")
+
+    def handle_event(self, event):
+        if isinstance(event, events.system_events.QuitEvent):
+            self.quit()

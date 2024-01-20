@@ -6,25 +6,25 @@ This module will be the entry point for the game and for now will contain the ma
 TODO: add typing
 """
 
+from event_manager import EventManager
+from game_state_manager import GameStateManager
 from game_ui import GameUI
 
 def main():
     """Contains the main game loop"""
 
+    # Initialize controller modules
+    event_manager = EventManager()
+    game_state_manager = GameStateManager(event_manager)
+
     # Initialize the game user interface
-    game_ui = GameUI()
+    game_ui = GameUI(event_manager)
 
-    running = True
-
-    while running:
-        # Get and process new events
-        new_events = game_ui.poll_events()
-        for event in new_events:
-            if event == "quit":
-                running = False
-                break
+    while game_state_manager.is_running:
+        game_ui.publish_events()
+        event_manager.process_events()
         
-        if not running:
+        if not game_state_manager.is_running:
             break
 
         # Update the view
@@ -32,7 +32,6 @@ def main():
 
     # Clean up
     game_ui.quit()
-
 
 if __name__ == "__main__":
     main()
