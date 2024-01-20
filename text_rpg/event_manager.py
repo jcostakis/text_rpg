@@ -1,6 +1,6 @@
 from typing import Type
 
-from base_event import BaseEvent
+from events.base_event import BaseEvent
 # TODO: Should I be importing like this instead of just importing the module?
 
 class EventManager():
