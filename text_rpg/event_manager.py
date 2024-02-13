@@ -1,38 +1,88 @@
+"""Responsible for managing all behavior related to using the event system.
+
+All behavior related to the functioning of events should be located in this
+module unless this module becomes significantly more complicated in the future.
+This includes adding and removing listeners for events and notifying listeners
+of events when the queue is processed. 
+"""
+
+from collections import deque
 from typing import Type
 
 from events.base_event import BaseEvent
-# TODO: Should I be importing like this instead of just importing the module?
 
-class EventManager():
-    """Responsible for keeping track of listeners and relaying messages to them
+
+class EventManager:
+    """Tracks listeners for events and notifies listeners when those events
+    are processed
+
+    In order for a component to be responsive to events occuring in the program
+    it should be registered as a listener to the relevent event type that the
+    component should do something in response to. Before that component is
+    deleted it should unregister as a listener.
     """
-    def __init__(self):
-        self.listeners: Dict[Type[BaseEvent], List[object]] = {}
-        self.event_queue: List[BaseEvent] = []
 
-    def register_listener(self, event_type: Type[BaseEvent], listener: object):
-        """Adds a listener to the given event_type"""
+    def __init__(self) -> None:
+        # Maps from event types to listeners of that event type
+        self._listeners: dict[Type[BaseEvent], list[object]] = {}
+        self._event_queue: deque[BaseEvent] = deque()
+
+    def register_listener(self, listener: object, event_type: Type[BaseEvent]) -> None:
+        """Adds a listener for the given event_type.
+
+        Args:
+            listener:
+                The object that will be notified when that type of event occurs.
+            event_type:
+                The type of event that the listener will be notified of.
+
+        Raises:
+            ValueError: The listener doesn't have a handle_event method.
+        """
         if not hasattr(listener, "handle_event"):
-            raise ValueError(f"{listener} doesn't have a handle_event method.")
-        self.listeners.setdefault(event_type, []).append(listener)
+            raise ValueError(
+                f"{type(listener).__name__} doesn't have a handle_event method."
+            )
+        self._listeners.setdefault(event_type, []).append(listener)
 
-    def unregister_listener(self, event_type: Type[BaseEvent], listener: object):
-        """Removes a listener to the given event_type"""
-        if event_type in self.listeners and listener in self.listeners[event_type]:
-                self.listeners[event_type].remove(listener)
+    def unregister_listener(
+        self,
+        listener: object,
+        event_type: Type[BaseEvent],
+    ) -> None:
+        """Removes a listener for the given event_type.
 
-    def queue_event(self, event: BaseEvent):
-        """Adds an event to the queue to be processed on the next update"""
-        self.event_queue.append(event)
-    
-    def notify(self, event: BaseEvent):
-        """Immediately notify all relevant listeners of the current event"""
-        for event_type, listeners in self.listeners.items():
-            if isinstance(event, event_type):
-                for listener in listeners:
-                    listener.handle_event(event)
+        Args:
+            listener:
+                The object that will no longer be listening to the event type.
+            event_type:
+                The type of event that the listener will no longer be notified of.
+        """
+        if event_type in self._listeners and listener in self._listeners[event_type]:
+            self._listeners[event_type].remove(listener)
 
-    def process_events(self):
-        """Processes all events in the event_queue"""
-        while self.event_queue:
-            self.notify(self.event_queue.pop())
+    def queue_event(self, event: BaseEvent) -> None:
+        """Adds an event to the queue to be processed next process_events call.
+
+        Args:
+            event:
+                The event that will be queued.
+        """
+        self._event_queue.append(event)
+
+    def notify(self, event: BaseEvent) -> None:
+        """Immediately notify all relevant listeners of the current event.
+
+        Args:
+            event:
+                The event that listeners will be notified of.
+        """
+        type_listeners = self._listeners.get(type(event), [])
+        for listener in type_listeners:
+            listener.handle_event(event)
+
+    def process_events(self) -> None:
+        """Processes all events in the event_queue, leaving it empty."""
+        # Note that this will process events that are created while processing old events
+        while self._event_queue:
+            self.notify(self._event_queue.popleft())
