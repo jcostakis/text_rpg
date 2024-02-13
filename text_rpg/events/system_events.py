@@ -1,4 +1,7 @@
+"""Contains events related to general system behavior."""
+
 from events.base_event import BaseEvent
 
+
 class QuitEvent(BaseEvent):
-    pass
+    """There is a request to quit."""

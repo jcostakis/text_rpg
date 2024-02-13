@@ -1,18 +1,23 @@
-"""Serves as the base event class for all other events.
+"""Serves as the base event class for all events types.
 
-TODO:
-    - Add support for timezones
+Includes basic functionality that is shared among all event types.
 """
 
 import datetime
-import uuid 
+import uuid
 
-class BaseEvent():
-    """Base event class that all other events should inherit."""
 
-    def __init__(self):
+class BaseEvent:
+    """Base event class that all other events should inherit.
+
+    Attributes:
+        id: The UUID uniquely identifying the event.
+        timestamp: The local datetime that the event was generated.
+    """
+
+    def __init__(self) -> None:
         self.id: uuid.UUID = uuid.uuid4()
         self.timestamp: datetime.datetime = datetime.datetime.now()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.__class__.__qualname__} {self.id} at {self.timestamp}"

@@ -1,17 +1,18 @@
-"""
-text_rpg
+"""The entry point for the game.
 
-This module will be the entry point for the game and for now will contain the main loop.
-
-TODO: add typing
+The main loop is ran in this module, however most logic should be handled by 
+other components. The responsibility of this module is to begin the program, 
+and tell the components to do whatever work they need to do each loop. Specific
+logic for how the game should work should be delegated to other modules such as
+controllers like the event manager.
 """
 
 from event_manager import EventManager
 from game_state_manager import GameStateManager
 from game_ui import GameUI
 
-def main():
-    """Contains the main game loop"""
+def main() -> None:
+    """Initializes the game's components and runs the main loop"""
 
     # Initialize controller modules
     event_manager = EventManager()
@@ -20,18 +21,19 @@ def main():
     # Initialize the game user interface
     game_ui = GameUI(event_manager)
 
-    while game_state_manager.is_running:
+    while True:
+        # Handle events
         game_ui.publish_events()
         event_manager.process_events()
-        
+
         if not game_state_manager.is_running:
             break
 
-        # Update the view
-        game_ui.update() 
+        # Any other updates go here
 
-    # Clean up
-    game_ui.quit()
+        # Update the view
+        game_ui.update()
+
 
 if __name__ == "__main__":
     main()

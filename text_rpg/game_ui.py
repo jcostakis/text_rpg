@@ -1,74 +1,109 @@
-"""
-game_ui
+"""The ui for the game.
 
 This module is the default user interface for the game. Following the MVC pattern 
-(as the view) it is responsible for capturing input and displaying changes
-in the model. 
+(as the view) it is responsible for capturing input and displaying the state
+of the game to the user. After creation clients should primarily use this 
+class through the update() and publish_events() methods.
 """
 
 import pygame
 import pygame_gui
 
+import events.base_event
 import events.system_events
 from event_manager import EventManager
 
-class GameUI():
-    """A pygame GUI object"""
-    def __init__(self, event_manager):
-        self.event_manager = event_manager
-        self.event_manager.register_listener(events.system_events.QuitEvent, self)
-        
+
+class GameUI:
+    """The UI component of the game.
+
+    This class is responsible for displaying the game's state and publishing user
+    input events to the event_manager.
+    """
+
+    def __init__(self, event_manager: EventManager) -> None:
+        self._event_manager: EventManager = event_manager
+
+        # Register as a listener to relevent events
+        self._event_manager.register_listener(self, events.system_events.QuitEvent)
+
         pygame.init()
 
-        self.screen_resolution = (1280, 720)
-
-        self.screen = pygame.display.set_mode(self.screen_resolution)
-        self.manager = pygame_gui.UIManager(self.screen_resolution)
-        self.clock = pygame.time.Clock()
-
-        # TODO: Create a container that these will go in
+        # Initialize pygame and pygame_gui core components
+        screen_resolution = (1280, 720)
+        self._screen: pygame.Surface = pygame.display.set_mode(screen_resolution)
+        self._ui_manager: pygame_gui.UIManager = pygame_gui.UIManager(screen_resolution)
+        self._clock: pygame.Clock = pygame.time.Clock()
 
         # Initialize the various UI components
-        self.output_textbox = self.initialize_output_textbox()
-        self.input_textbox = self.initialize_input_textbox()
-
+        self._output_textbox: pygame_gui.elements.UITextBox = (
+            self.initialize_output_textbox()
+        )
+        self._input_textbox: pygame_gui.elements.UITextEntryBox = (
+            self.initialize_input_textbox()
+        )
 
     def initialize_output_textbox(self) -> pygame_gui.elements.UITextBox:
-        # Create text box for displaying descriptive text
+        """Creates and returns a read-only UITextBox.
+
+        This returns a 300x300 px textbox that the user can't type text into
+        directly.
+        """
         text_output_rect = pygame.Rect(0, 0, 300, 300)
         output_textbox = pygame_gui.elements.UITextBox("test", text_output_rect)
-        return output_textbox 
+        return output_textbox
 
     def initialize_input_textbox(self) -> pygame_gui.elements.UITextEntryLine:
-        # Create text box for player input
-        text_input_rect = pygame.Rect(0, 300, 300, 100)
-        input_textbox = pygame_gui.elements.UITextEntryLine(text_input_rect, self.manager, initial_text="> ")
-        return input_textbox 
-    
-    def update(self) -> None:
-        time_delta = self.clock.tick(60)/1000.00
-        self.manager.update(time_delta)
+        """Creates and returns a text entry box.
 
-        self.screen.fill("purple") 
-        self.manager.draw_ui(self.screen)
+        This returns a 300x100 px text entry box that will accept user input.
+        """
+        text_input_rect = pygame.Rect(0, 300, 300, 100)
+        input_textbox = pygame_gui.elements.UITextEntryLine(
+            text_input_rect, self._ui_manager, initial_text="> "
+        )
+        return input_textbox
+
+    def update(self) -> None:
+        """Redraws the GUI so that any graphical changes are displayed.
+
+        Updates to components directly should not occur here. They should result
+        from handle_event calls through the event_manager. (For example, if new
+        text is entered by the user it should generate an event which a text
+        box is listening to and then the text box should append that text.)
+        """
+        # Tick returns the time in milliseconds since last frame, divide by 1000 to convert to seconds
+        time_delta = self._clock.tick(60) / 1000.00
+        self._ui_manager.update(time_delta)
+
+        # Set background color
+        self._screen.fill("purple")
+
+        # Update UI elements
+        self._ui_manager.draw_ui(self._screen)
         pygame.display.flip()
 
     def quit(self) -> None:
+        """Close the GUI window for application shutdown."""
         pygame.quit()
 
-    def publish_events(self):
+    def publish_events(self) -> None:
+        """Publish events based on UI interactions.
+
+        All events produced by the GUI should be published for the event system
+        here so that any listeners can perform the necessary logic in response
+        to that event.
+        """
         for event in pygame.event.get():
-            self.manager.process_events(event)
+            self._ui_manager.process_events(event)
             match event.type:
                 case pygame.QUIT:
-                    self.event_manager.queue_event(events.system_events.QuitEvent())
+                    self._event_manager.queue_event(events.system_events.QuitEvent())
                 case pygame_gui.UI_TEXT_ENTRY_FINISHED:
-                    # TODO: Make this trigger event and trigger text parser 
                     # Append entered text
-                    self.output_textbox.append_html_text(f"\n{event.text}")
-                    # TODO: Generate event to be handled by controller here
-                    self.input_textbox.set_text("> ")
+                    self._output_textbox.append_html_text(f"\n{event.text}")
+                    self._input_textbox.set_text("> ")
 
-    def handle_event(self, event):
+    def handle_event(self, event: events.base_event.BaseEvent) -> None:
         if isinstance(event, events.system_events.QuitEvent):
             self.quit()
