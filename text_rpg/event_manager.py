@@ -68,6 +68,8 @@ class EventManager:
             event:
                 The event that will be queued.
         """
+        if not isinstance(event, BaseEvent):
+            raise ValueError(f"{type(event).__name__} is not an event!")
         self._event_queue.append(event)
 
     def notify(self, event: BaseEvent) -> None:
