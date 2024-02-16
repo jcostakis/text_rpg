@@ -10,6 +10,8 @@ controllers like the event manager.
 from event_manager import EventManager
 from game_state_manager import GameStateManager
 from game_ui import GameUI
+from text_input_handler import TextInputHandler
+
 
 def main() -> None:
     """Initializes the game's components and runs the main loop"""
@@ -17,6 +19,7 @@ def main() -> None:
     # Initialize controller modules
     event_manager = EventManager()
     game_state_manager = GameStateManager(event_manager)
+    text_input_handler = TextInputHandler(event_manager)
 
     # Initialize the game user interface
     game_ui = GameUI(event_manager)

@@ -10,6 +10,7 @@ import pygame
 import pygame_gui
 
 import events.base_event
+import events.io_events
 import events.system_events
 from event_manager import EventManager
 
@@ -26,6 +27,7 @@ class GameUI:
 
         # Register as a listener to relevent events
         self._event_manager.register_listener(self, events.system_events.QuitEvent)
+        self._event_manager.register_listener(self, events.io_events.TextOutputChanged)
 
         pygame.init()
 
@@ -50,7 +52,7 @@ class GameUI:
         directly.
         """
         text_output_rect = pygame.Rect(0, 0, 300, 300)
-        output_textbox = pygame_gui.elements.UITextBox("test", text_output_rect)
+        output_textbox = pygame_gui.elements.UITextBox("", text_output_rect)
         return output_textbox
 
     def initialize_input_textbox(self) -> pygame_gui.elements.UITextEntryLine:
@@ -100,10 +102,14 @@ class GameUI:
                 case pygame.QUIT:
                     self._event_manager.queue_event(events.system_events.QuitEvent())
                 case pygame_gui.UI_TEXT_ENTRY_FINISHED:
-                    # Append entered text
-                    self._output_textbox.append_html_text(f"\n{event.text}")
+                    self._event_manager.queue_event(
+                        events.io_events.TextInputEvent(event.text)
+                    )
                     self._input_textbox.set_text("> ")
 
     def handle_event(self, event: events.base_event.BaseEvent) -> None:
-        if isinstance(event, events.system_events.QuitEvent):
-            self.quit()
+        match event:
+            case events.system_events.QuitEvent():
+                self.quit()
+            case events.io_events.TextOutputChanged():
+                self._output_textbox.set_text(event.output_text)
