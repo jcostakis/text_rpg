@@ -11,6 +11,7 @@ from event_manager import EventManager
 from game_state_manager import GameStateManager
 from game_ui import GameUI
 from text_input_handler import TextInputHandler
+from text_output_handler import TextOutputHandler
 
 
 def main() -> None:
@@ -20,6 +21,7 @@ def main() -> None:
     event_manager = EventManager()
     game_state_manager = GameStateManager(event_manager)
     text_input_handler = TextInputHandler(event_manager)
+    text_output_handler = TextOutputHandler(event_manager)
 
     # Initialize the game user interface
     game_ui = GameUI(event_manager)
