@@ -20,6 +20,7 @@ class TextOutputHandler:
 
         self.event_manager.register_listener(self, io_events.TextInputEvent)
         self.event_manager.register_listener(self, io_events.ClearOutputRequest)
+        self.event_manager.register_listener(self, io_events.PrintToOutput)
 
     def handle_event(self, event: base_event.BaseEvent):
         match event:
@@ -27,3 +28,5 @@ class TextOutputHandler:
                 self.text_output.append_line(event.input_text)
             case io_events.ClearOutputRequest():
                 self.text_output.clear()
+            case io_events.PrintToOutput():
+                self.text_output.append_line(event.print_text)

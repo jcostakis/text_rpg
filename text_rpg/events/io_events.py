@@ -27,3 +27,13 @@ class TextOutputChanged(BaseEvent):
 
 class ClearOutputRequest(BaseEvent):
     """Request to clear the output text."""
+
+class PrintToOutput(BaseEvent):
+    """Print text to the output text box.
+
+    Attributes:
+        print_text: Text to be printed by the output text box."""
+
+    def __init__(self, print_text: str) -> None:
+        self.print_text : str = print_text 
+        super().__init__()

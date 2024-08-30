@@ -9,7 +9,7 @@ rest of the game.
 import enum
 
 from event_manager import EventManager
-from events.io_events import ClearOutputRequest
+from events.io_events import ClearOutputRequest, PrintToOutput
 from events.system_events import QuitEvent
 
 
@@ -19,6 +19,7 @@ class Tokens(enum.Enum):
     CLEAR = 1
     ERROR = 2
     QUIT = 3
+    HELP = 4
 
 
 # Maps between keywords and valid tokens
@@ -26,7 +27,10 @@ TOKEN_MAP = {
     "clear": Tokens.CLEAR,
     "quit": Tokens.QUIT,
     "exit": Tokens.QUIT,
+    "help": Tokens.HELP,
 }
+
+HELP_TEXT = "\nclear: clear the text output box\nquit: exit the game\nhelp: display some of the available commands\n"
 
 
 class TextParser:
@@ -44,6 +48,8 @@ class TextParser:
                     self.event_manager.queue_event(ClearOutputRequest())
                 case Tokens.QUIT:
                     self.event_manager.queue_event(QuitEvent())
+                case Tokens.HELP:
+                    self.event_manager.queue_event(PrintToOutput(HELP_TEXT))
 
     def tokenize(self, string: str) -> list[Tokens]:
         """Converts input str into a list of tokens."""
