@@ -61,6 +61,17 @@ class EventManager:
         if event_type in self._listeners and listener in self._listeners[event_type]:
             self._listeners[event_type].remove(listener)
 
+    def unregister_all(self, listener: object) -> None:
+        """Removes a listener from all event_types.
+
+        Args:
+            listener:
+                The object that will no longer be listening to any events.
+        """
+        for event_type in self._listeners:
+            if listener in self._listeners[event_type]:
+                self._listeners[event_type].remove(listener)
+
     def queue_event(self, event: BaseEvent) -> None:
         """Adds an event to the queue to be processed next process_events call.
 
