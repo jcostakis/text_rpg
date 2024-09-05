@@ -42,6 +42,16 @@ class TextParser:
     def handle_input(self, input_string: str) -> None:
         """ "Generates events to communicate user requests to system."""
         tokens = self.tokenize(input_string)
+
+        # Report error if present
+        if Tokens.ERROR in tokens:
+            self.event_manager.queue_event(
+                PrintToOutput(
+                    f"Invalid input: '{input_string}' contains an invalid keyword."
+                )
+            )
+
+        # Parse input tokens
         if len(tokens) == 1:
             match tokens[0]:
                 case Tokens.CLEAR:
