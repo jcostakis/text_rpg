@@ -12,7 +12,6 @@ from event_manager import EventManager
 from events.io_events import ClearOutputRequest, PrintToOutput
 from events.system_events import QuitEvent
 
-
 class Tokens(enum.Enum):
     """Tokens representing possible inputs by the user."""
 
@@ -41,26 +40,20 @@ class TextParser:
 
     def handle_input(self, input_string: str) -> None:
         """ "Generates events to communicate user requests to system."""
-        tokens = self.tokenize(input_string)
-        if len(tokens) == 1:
-            match tokens[0]:
-                case Tokens.CLEAR:
-                    self.event_manager.queue_event(ClearOutputRequest())
-                case Tokens.QUIT:
-                    self.event_manager.queue_event(QuitEvent())
-                case Tokens.HELP:
-                    self.event_manager.queue_event(PrintToOutput(HELP_TEXT))
-
-    def tokenize(self, string: str) -> list[Tokens]:
-        """Converts input str into a list of tokens."""
-        tokens = []
-
-        # Get rid of input prompt:
-        string = string.removeprefix(">")
-
-        words = string.split()
-        for word in words:
-            token = TOKEN_MAP.get(word.lower(), Tokens.ERROR)
-            tokens.append(token)
-
-        return tokens
+        # Prepare string
+        input_string = input_string.removeprefix(">")
+        words = input_string.split()
+        
+        # First word should be keyword 
+        token = TOKEN_MAP.get(words[0].lower(), Tokens.ERROR)
+ 
+        # Parse input tokens
+        match token:
+            case Tokens.CLEAR:
+                self.event_manager.queue_event(ClearOutputRequest())
+            case Tokens.QUIT:
+                self.event_manager.queue_event(QuitEvent())
+            case Tokens.HELP:
+                self.event_manager.queue_event(PrintToOutput(HELP_TEXT))
+            case Tokens.ERROR:
+                self.event_manager.queue_event(PrintToOutput(f"Not a valid keyword: '{words[0]}'"))
