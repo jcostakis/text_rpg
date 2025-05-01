@@ -8,12 +8,16 @@ class through the update() and publish_events() methods.
 
 import pygame
 import pygame_gui
+import pygame_gui.core.ui_container
 
 import events.base_event
 import events.io_events
 import events.system_events
 from event_manager import EventManager
 
+CENTRAL_PANEL_PER = 0.7
+VIEWPORT_HEIGHT_PER = 0.9
+TEXT_INPUT_PX = 50
 
 class GameUI:
     """The UI component of the game.
@@ -32,37 +36,65 @@ class GameUI:
         pygame.init()
 
         # Initialize pygame and pygame_gui core components
-        screen_resolution = (1280, 720)
-        self._screen: pygame.Surface = pygame.display.set_mode(screen_resolution)
-        self._ui_manager: pygame_gui.UIManager = pygame_gui.UIManager(screen_resolution)
+        self.screen_resolution = (1280, 720)
+        self._screen: pygame.Surface = pygame.display.set_mode(self.screen_resolution)
+        self._ui_manager: pygame_gui.UIManager = pygame_gui.UIManager(self.screen_resolution)
         self._clock: pygame.Clock = pygame.time.Clock()
+
+        # Make UI containers 
+        self._main_viewport: pygame_gui.core.ui_container.UIContainer = (
+            self.initialize_main_viewport()
+        )
 
         # Initialize the various UI components
         self._output_textbox: pygame_gui.elements.UITextBox = (
-            self.initialize_output_textbox()
+            self.initialize_output_textbox(self._main_viewport)
         )
-        self._input_textbox: pygame_gui.elements.UITextEntryBox = (
-            self.initialize_input_textbox()
+        self._input_textbox: pygame_gui.elements.UITextEntryLine = (
+            self.initialize_input_textbox(self._main_viewport)
         )
 
-    def initialize_output_textbox(self) -> pygame_gui.elements.UITextBox:
+    def initialize_main_viewport(self) -> pygame_gui.core.ui_container.UIContainer:
+        """Creates and returns the main viewport UIContainer.
+        
+        Returns a UIContainer that is centered along x in the root container and offset from the top 
+        based on the VIEWPORT_HEIGHT_PER. Should contain the main text input and output boxes. Sized based
+        on VIEWPORT_HEIGHT_PER and CENTRAL_PANEL_PER.
+        """
+        top_offset = self.screen_resolution[1] * (1 - VIEWPORT_HEIGHT_PER)
+        horz_offset = self.screen_resolution[0] * (1 - CENTRAL_PANEL_PER)
+
+        main_viewport_rect = pygame.Rect(0, top_offset, self.screen_resolution[0] - horz_offset, self.screen_resolution[1] - top_offset)
+        main_viewport = pygame_gui.core.UIContainer(main_viewport_rect, 
+            manager=self._ui_manager, 
+            anchors={
+                'centerx':'centerx',
+                'top': 'top'
+            }
+        )
+        return main_viewport
+
+    def initialize_output_textbox(self, container: pygame_gui.core.ui_container.UIContainer) -> pygame_gui.elements.UITextBox:
         """Creates and returns a read-only UITextBox.
 
-        This returns a 300x300 px textbox that the user can't type text into
-        directly.
+        This returns a textbox that the user can't type text into. Scaled to match the container offset from the bottom by 50 px.
         """
-        text_output_rect = pygame.Rect(0, 0, 300, 300)
-        output_textbox = pygame_gui.elements.UITextBox("", text_output_rect)
+        text_output_rect = pygame.Rect(0, 0, container.get_size()[0], container.get_size()[1] - TEXT_INPUT_PX)
+        output_textbox = pygame_gui.elements.UITextBox("", text_output_rect, container=container)
         return output_textbox
 
-    def initialize_input_textbox(self) -> pygame_gui.elements.UITextEntryLine:
+    def initialize_input_textbox(self, container: pygame_gui.core.ui_container.UIContainer) -> pygame_gui.elements.UITextEntryLine:
         """Creates and returns a text entry box.
 
-        This returns a 300x100 px text entry box that will accept user input.
+        This returns a text entry box that will accept user input. It is scaled horizontally to match the continer and 50 px tall.
         """
-        text_input_rect = pygame.Rect(0, 300, 300, 100)
+        text_input_rect = pygame.Rect(0, -TEXT_INPUT_PX, container.get_size()[0], TEXT_INPUT_PX)
+
         input_textbox = pygame_gui.elements.UITextEntryLine(
-            text_input_rect, self._ui_manager, initial_text="> "
+            text_input_rect, self._ui_manager, initial_text="> ", container=container,
+                    anchors={
+                        'bottom': 'bottom'
+                    }
         )
         return input_textbox
 
